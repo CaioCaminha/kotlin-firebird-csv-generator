@@ -7,17 +7,29 @@ import java.sql.DriverManager
 
 
 fun main(args: Array<String>) {
-
-
     Class.forName("org.firebirdsql.jdbc.FBDriver")
     val connection = DriverManager.getConnection(
         "jdbc:firebirdsql:localhost/3050:/Users/caiocaminha/Documents/monkey.fdb",
         "SYSDBA","password")
 
 
-    val resultSet = connection.createStatement().executeQuery("SELECT pf.PRODUTO_ID, p.PRODUTO_DESCRICAO, p.GRUPO_ID, f.FILIAL_NAME, pf.PRODUTO_VR_CUSTO, pf.PRODUTO_VR_VENDA_ATACADO FROM PRODUTOS_FILIAL pf " +
-            "INNER JOIN PRODUTO p ON p.PRODUTO_ID = pf.PRODUTO_ID " +
-            "INNER JOIN FILIAL f ON f.FILIAL_ID = pf.FILIAL_ID")
+    val resultSet = connection.createStatement().executeQuery("""
+        select pf.produto_id as codigo_do_produto,
+            pd.produto_descricao as descricao,
+            pd.codfis_id as ncm,
+            pf.produto_vr_custo as preco_compra,
+            pf.produto_vr_venda_varejo as preco_venda,
+            pf.produto_qtd_estoque as unidade,
+            ma.marca_descricao as marca,
+            fi.filial_nome as local_de_estoque,
+            gp.grupo_descricao as grupo
+        from produtos_filial pf
+            left join produto pd on pd.produto_id = pf.produto_id
+            inner join marca ma on ma.marca_id = pd.marca_id
+            inner join filial fi on fi.filial_id = pf.filial_id
+            inner join grupo gp on gp.grupo_id = pd.grupo_id
+        where pd.produto_situacao = 0
+    """.trimIndent())
 
     val resultSetList = mutableListOf<CsvResultSet>()
 
@@ -28,8 +40,8 @@ fun main(args: Array<String>) {
     while (resultSet.next()) {
         resultSetList.add(
             CsvResultSet(
-                produtoId = resultSet.getInt("produto_id"),
-                produtoDescricao = resultSet.getString("produto_descricao"),
+                produtoId = resultSet.getInt("produtdo_id"),
+                produtoDescricao = resultSet.getString("descricao"),
                 grupoId = resultSet.getInt("grupo_id"),
                 filialName = resultSet.getString("filial_name"),
                 valorCusto = resultSet.getInt("PRODUTO_VR_CUSTO"),
