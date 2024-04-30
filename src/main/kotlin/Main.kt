@@ -7,9 +7,10 @@ import java.sql.DriverManager
 
 
 fun main(args: Array<String>) {
-    Class.forName("org.firebirdsql.jdbc.FBDriver")
+    //Class.forName("org.firebirdsql.jdbc.FBDriver")
+    Class.forName("interbase.interclient.Driver")
     val connection = DriverManager.getConnection(
-        "jdbc:firebirdsql:localhost/3050:/Users/caiocaminha/Documents/monkey.fdb",
+        "jdbc:interbase://localhost/3050:/Users/caiocaminha/Documents/GESTOR_TESTE.gdb",
         "SYSDBA","password")
 
 

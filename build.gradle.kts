@@ -21,6 +21,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.0")
     implementation("com.opencsv:opencsv:5.9")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.17.0")
+    implementation(files("libs/interclient.jar"))
 }
 
 tasks.test {
