@@ -4,71 +4,75 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema
 import gateway.database.CsvResultSet
 import java.io.FileOutputStream
 import java.sql.DriverManager
+import java.text.NumberFormat
+import java.util.*
 
 
 fun main(args: Array<String>) {
-    Class.forName("org.firebirdsql.jdbc.FBDriver")
+    //Class.forName("org.firebirdsql.jdbc.FBDriver")
     //Class.forName("interbase.interclient.Driver")
-    val connection = DriverManager.getConnection(
-        "jdbc:firebirdsql://localhost/3050:C:/gestor/BANCO/",
-    )
+    val connection = DriverManager.getConnection("jdbc:h2:mem:;INIT=RUNSCRIPT FROM 'classpath:generator.sql';")
+
     val resultSet = connection.createStatement().executeQuery("""
-        select pf.produto_id as codigo_do_produto,
-            pd.produto_descricao as descricao,
-            pd.codfis_id as ncm,
-            pf.produto_vr_custo as preco_compra,
-            pf.produto_vr_venda_varejo as preco_venda,
-            pf.produto_qtd_estoque as unidade,
-            ma.marca_descricao as marca,
-            fi.filial_nome as local_de_estoque,
-            gp.grupo_descricao as grupo
-        from produtos_filial pf
-            left join produto pd on pd.produto_id = pf.produto_id
-            inner join marca ma on ma.marca_id = pd.marca_id
-            inner join filial fi on fi.filial_id = pf.filial_id
-            inner join grupo gp on gp.grupo_id = pd.grupo_id
-        where pd.produto_situacao = 0
+        select * from TEST;        
     """.trimIndent())
 
     val resultSetList = mutableListOf<CsvResultSet>()
 
     val csvResultList = mutableListOf<CsvResultSet>()
 
-
-
     while (resultSet.next()) {
+
+        println(resultSet.getString("PRECO_COMPRA"))
+
         resultSetList.add(
             CsvResultSet(
-                produtoId = resultSet.getInt("produtdo_id"),
-                produtoDescricao = resultSet.getString("descricao"),
-                grupoId = resultSet.getInt("grupo_id"),
-                filialName = resultSet.getString("filial_name"),
-                valorCusto = resultSet.getInt("PRODUTO_VR_CUSTO"),
-                valorVenda = resultSet.getInt("PRODUTO_VR_VENDA_ATACADO"),
+                codigo_do_produto = resultSet.getString("CODIGO_DO_PRODUTO") ?: "0",
+                descricao = resultSet.getString("DESCRICAO") ?: "0",
+                ncm = resultSet.getString("NCM") ?: "0",
+                preco_venda = resultSet.getString("PRECO_VENDA") ?: "0",
+                preco_compra = resultSet.getString("PRECO_COMPRA") ?: "0",
+                unidade = resultSet.getString("UNIDADE") ?: "0",
+                marca = resultSet.getString("MARCA") ?: "0",
+                local_de_estoque = resultSet.getString("LOCAL_DE_ESTOQUE") ?: "0",
+                grupo = resultSet.getString("GRUPO") ?: "0",
             )
         )
     }
 
+
+    resultSetList.removeIf {
+        it.preco_venda == "0" && it.preco_compra == "0"
+    }
+
+    val numberFormat = NumberFormat.getInstance(Locale.GERMAN)
+
     resultSetList.forEach { csvResult ->
         val filteredList = resultSetList
-            .filter { it.produtoId == csvResult.produtoId }
+            .filter { it.codigo_do_produto == csvResult.codigo_do_produto }
 
-        if(csvResult.valorCusto == 0) {
-            val valorCusto = filteredList.filter { it.valorCusto != 0 }
-                .first().valorCusto
 
-            csvResultList.add(
-                csvResult.copy(valorCusto = valorCusto)
-            )
-        } else if(csvResult.valorVenda == 0) {
-            val valorVenda = filteredList.filter { it.valorVenda != 0 }
-                .first().valorVenda
 
-            csvResultList.add(
-                csvResult.copy(valorVenda = valorVenda)
-            )
+        if(numberFormat.parse(csvResult.preco_compra).toDouble() == 0.0) {
+            val valorCusto = filteredList.firstOrNull { numberFormat.parse(it.preco_compra).toDouble() != 0.0 }?.preco_compra
+
+            if (valorCusto != null) {
+                csvResultList.add(
+                    csvResult.copy(preco_compra = valorCusto)
+                )
+            }
+        } else if(numberFormat.parse(csvResult.preco_venda).toDouble() == 0.0) {
+            val valorVenda = filteredList.firstOrNull { numberFormat.parse(it.preco_venda).toDouble() != 0.0 }?.preco_venda
+
+            if (valorVenda != null){
+                csvResultList.add(
+                    csvResult.copy(preco_venda = valorVenda)
+                )
+            }
         }
     }
+
+    println(resultSetList)
 
     val csvMapper = CsvMapper().apply {
         enable(CsvParser.Feature.TRIM_SPACES)
@@ -76,12 +80,15 @@ fun main(args: Array<String>) {
     }
 
     val schema = CsvSchema.builder()
-        .addNumberColumn("PRODUTO_ID")
-        .addColumn("PRODUTO_DESCRICAO")
-        .addColumn("GRUPO")
-        .addColumn("FILIAL_NAME")
-        .addColumn("VALOR_CUSTO")
-        .addColumn("VALOR_VENDA")
+        .addNumberColumn("codigo_do_produto")
+        .addColumn("descricao")
+        .addColumn("ncm")
+        .addColumn("preco_compra")
+        .addColumn("preco_venda")
+        .addColumn("unidade")
+        .addColumn("marca")
+        .addColumn("local_de_estoque")
+        .addColumn("grupo")
         .build()
 
     schema.withSkipFirstDataRow(true)
@@ -93,7 +100,7 @@ fun main(args: Array<String>) {
     }
 
 
-    csvMapper.writer().with(schema.withHeader()).writeValues(FileOutputStream("/Users/caiocaminha/Desktop/gestor_planilha.csv")).writeAll(csvResultList)
+    csvMapper.writer().with(schema.withHeader()).writeValues(FileOutputStream("/Users/caiocaminha/Desktop/GESTOR_PLANILHA_NOVA.csv")).writeAll(csvResultList)
 
 }
 

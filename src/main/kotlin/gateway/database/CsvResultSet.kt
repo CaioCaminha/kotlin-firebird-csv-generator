@@ -1,18 +1,20 @@
 package gateway.database
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.commons.csv.CSVFormat
 
 data class CsvResultSet(
-    @field:JsonProperty("codigo_do_produto") val produtoId: Int,
-    @field:JsonProperty("produto_descricao") val produtoDescricao: String,
-    @field:JsonProperty("GRUPO") val grupoId: Int,
-    @field:JsonProperty("FILIAL_NAME") val filialName: String,
-    @field:JsonProperty("VALOR_CUSTO") val valorCusto: Int,
-    @field:JsonProperty("VALOR_VENDA") val valorVenda: Int,
+    @field:JsonProperty("codigo_do_produto") val codigo_do_produto: String,
+    @field:JsonProperty("descricao") val descricao: String,
+    @field:JsonProperty("ncm") val ncm: String,
+    @field:JsonProperty("preco_compra") val preco_compra: String,
+    @field:JsonProperty("preco_venda") val preco_venda: String,
+    @field:JsonProperty("unidade") val unidade: String,
+    @field:JsonProperty("marca") val marca: String,
+    @field:JsonProperty("local_de_estoque") val local_de_estoque: String,
+    @field:JsonProperty("grupo") val grupo: String,
 ) {
 
-    constructor() : this(2, "", 2, "", 2, 2)
+    constructor() : this("", "", "", "", "", "", "", "", "")
 
 }
 

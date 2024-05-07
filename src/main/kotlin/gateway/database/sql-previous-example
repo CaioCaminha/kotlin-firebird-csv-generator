@@ -1,0 +1,15 @@
+        select pf.codigo_do_produto as codigo_do_produto,
+            pd.descricao as descricao,
+            pd.ncm as ncm,
+            pf.preco_compra as preco_compra,
+            pf.preco_venda as preco_venda,
+            pf.unidade as unidade,
+            ma.marca as marca,
+            fi.local_de_estoque as local_de_estoque,
+            gp.grupo as grupo
+        from produtos_filial pf
+            left join produto pd on pd.produto_id = pf.produto_id
+            inner join marca ma on ma.marca_id = pd.marca_id
+            inner join filial fi on fi.filial_id = pf.filial_id
+            inner join grupo gp on gp.grupo_id = pd.grupo_id
+        where pd.produto_situacao = 0
